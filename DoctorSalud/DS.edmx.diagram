@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="83f9498d6a264d2b83eb3bc4e048c73e" Name="Diagram1" ZoomLevel="55">
+        <EntityTypeShape EntityType="DSModel.Cardiologo" Width="1.5" PointX="4.125" PointY="1.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="DSModel.CitaDS" Width="1.5" PointX="1" PointY="4.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="DSModel.MedicinaInterna" Width="1.5" PointX="6.125" PointY="2.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="DSModel.Nutriologo" Width="1.5" PointX="4.125" PointY="4.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="DSModel.Oftalmologo" Width="1.5" PointX="3.5" PointY="6.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DSModel.PacienteDS" Width="1.5" PointX="9.375" PointY="1.125" IsExpanded="true" />
+        <AssociationConnector Association="DSModel.FK_Cardiologo_PacienteDS" ManuallyRouted="false" />
+        <AssociationConnector Association="DSModel.FK_CitaDS_PacienteDS" ManuallyRouted="false" />
+        <AssociationConnector Association="DSModel.FK_MedicinaInterna_PacienteDS" ManuallyRouted="false" />
+        <AssociationConnector Association="DSModel.FK_Nutriologo_PacienteDS" ManuallyRouted="false" />
+        <AssociationConnector Association="DSModel.FK_Oftalmologo_PacienteDS" ManuallyRouted="false" />
+        <EntityTypeShape EntityType="DSModel.Menu" Width="1.5" PointX="6.375" PointY="10.5" />
+        <EntityTypeShape EntityType="DSModel.Roles" Width="1.5" PointX="6.375" PointY="7.625" />
+        <EntityTypeShape EntityType="DSModel.RolMenu" Width="1.5" PointX="8.625" PointY="6.5" />
+        <EntityTypeShape EntityType="DSModel.Usuarios" Width="1.5" PointX="8.625" PointY="10.125" />
+        <AssociationConnector Association="DSModel.FK_RolMenu_Menu" />
+        <AssociationConnector Association="DSModel.FK_RolMenu_Roles" />
+        <AssociationConnector Association="DSModel.FK_Usuarios_Roles" />
+        <EntityTypeShape EntityType="DSModel.RecepcionistaDS" Width="1.875" PointX="11.25" PointY="11.625" />
+        <EntityTypeShape EntityType="DSModel.SucursalDS" Width="1.875" PointX="8.625" PointY="13.5" />
+        <AssociationConnector Association="DSModel.FK_RecepcionistaDS_SucursalDS" />
+        <AssociationConnector Association="DSModel.FK_RecepcionistaDS_Usuarios" />
+        <EntityTypeShape EntityType="DSModel.EPI_A_Heredofamiliares" Width="1.5" PointX="3" PointY="31.25" />
+        <EntityTypeShape EntityType="DSModel.EPI_A_NoPatologicos" Width="1.5" PointX="3" PointY="43.125" />
+        <EntityTypeShape EntityType="DSModel.EPI_A_Patologicos" Width="1.5" PointX="3" PointY="46.375" />
+        <EntityTypeShape EntityType="DSModel.EPI_AparatosSistemas" Width="1.5" PointX="3" PointY="54.5" />
+        <EntityTypeShape EntityType="DSModel.EPI_Audiologia" Width="1.5" PointX="3" PointY="21" />
+        <EntityTypeShape EntityType="DSModel.EPI_Cardiologia" Width="1.5" PointX="3" PointY="23.875" />
+        <EntityTypeShape EntityType="DSModel.EPI_DictamenAptitud" Width="1.5" PointX="3" PointY="51.625" />
+        <EntityTypeShape EntityType="DSModel.EPI_ExploracionFisica" Width="1.5" PointX="3" PointY="27.75" />
+        <EntityTypeShape EntityType="DSModel.EPI_Laboratorio" Width="1.5" PointX="3" PointY="35.875" />
+        <EntityTypeShape EntityType="DSModel.EPI_Odontologia" Width="1.5" PointX="3" PointY="18.25" />
+        <EntityTypeShape EntityType="DSModel.Epi_Oftalmologia" Width="1.5" PointX="3" PointY="13.125" />
+        <EntityTypeShape EntityType="DSModel.EPI_SignosVitales" Width="1.5" PointX="3" PointY="38.625" />
+        <EntityTypeShape EntityType="DSModel.Paciente" Width="1.5" PointX="0.75" PointY="34.375" />
+        <AssociationConnector Association="DSModel.FK_EPI_A_Heredofamiliares_Paciente" />
+        <AssociationConnector Association="DSModel.FK_EPI_A_NoPatologicos_Paciente" />
+        <AssociationConnector Association="DSModel.FK_EPI_A_Patologicos_Paciente" />
+        <AssociationConnector Association="DSModel.FK_EPI_AparatosSistemas_Paciente" />
+        <AssociationConnector Association="DSModel.FK_EPI_Audiologia_Paciente" />
+        <AssociationConnector Association="DSModel.FK_EPI_Cardiologia_Paciente" />
+        <AssociationConnector Association="DSModel.FK_EPI_DictamenAptitud_Paciente" />
+        <AssociationConnector Association="DSModel.FK_EPI_ExploracionFisica_Paciente" />
+        <AssociationConnector Association="DSModel.FK_EPI_Laboratorio_Paciente" />
+        <AssociationConnector Association="DSModel.FK_EPI_Odontologia_Paciente" />
+        <AssociationConnector Association="DSModel.FK_Epi_Oftalmologia_Paciente" />
+        <AssociationConnector Association="DSModel.FK_EPI_SignosVitales_Paciente" />
+        <EntityTypeShape EntityType="DSModel.SignosVitalesDS" Width="1.5" PointX="3.125" PointY="61" />
+        <AssociationConnector Association="DSModel.FK_SignosVitalesDS_PacienteDS" />
+        <EntityTypeShape EntityType="DSModel.Farmacia" Width="1.5" PointX="3.125" PointY="66" />
+        <AssociationConnector Association="DSModel.FK_Farmacia_PacienteDS" />
+        <EntityTypeShape EntityType="DSModel.Referido" Width="1.5" PointX="0.75" PointY="0.75" />
+        <EntityTypeShape EntityType="DSModel.DoctorModuloDS" Width="1.5" PointX="11.25" PointY="14.625" />
+        <AssociationConnector Association="DSModel.FK_DoctorModuloDS_SucursalDS" />
+        <AssociationConnector Association="DSModel.FK_DoctorModuloDS_Usuarios" />
+        <EntityTypeShape EntityType="DSModel.Modulos" Width="1.5" PointX="11.375" PointY="0.875" />
+        <AssociationConnector Association="DSModel.FK_DoctorModuloDS_Modulos" />
+        <EntityTypeShape EntityType="DSModel.CERTIFICADO" Width="1.5" PointX="11.375" PointY="3.75" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

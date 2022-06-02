@@ -1,0 +1,794 @@
+﻿@model IEnumerable<DoctorSalud.PacienteDS>
+@{
+
+    ViewBag.Title = "Index";
+
+
+    var oUser = (Usuarios)HttpContext.Current.Session["User"];
+
+    DoctorSalud_Entities db = new DoctorSalud_Entities();
+    System.Web.Script.Serialization.JavaScriptSerializer js = new System.Web.Script.Serialization.JavaScriptSerializer();
+
+    var Recepcion = new int?();
+    var Hospital = "";
+    var idHospital = 0;
+    string Sucursal = null;
+    int idUser = 14;
+    string nombreUsuario = null;
+    string fila = "";
+    int registros;
+
+    int flag = 1; //contador de la tabla
+
+    DateTime start = DateTime.Now;
+    DateTime finish = DateTime.Now.AddDays(1);
+
+    int year = start.Year;
+    int month = start.Month;
+    int day = start.Day;
+
+    int year1 = finish.Year;
+    int month1 = finish.Month;
+    int day1 = finish.Day;
+
+    int tomorrorDay = day + 1;
+    DateTime thisDate = new DateTime(year, month, day);
+    DateTime tomorrowDate = new DateTime(year1, month1, day1);
+
+    var modelo = db.PacienteDS.Join(db.CitaDS, n => n.idPacienteDS, m => m.idPacienteDS, (n, m) => new { N = n, M = m }).Where(s => s.M.Sucursal == Sucursal && s.M.FechaCita >= thisDate && s.M.FechaCita < tomorrowDate)@*.OrderByDescending(o => new { o.M.TipoTramite,  }).OrderBy(r => r.M.EstatusPago)*@;
+int? idRol = 0;
+
+if (oUser != null)
+{
+idUser = oUser.idUsuario;
+nombreUsuario = oUser.Nombre;
+idRol = oUser.idRol;
+
+if (oUser.idRol == 14)
+{
+Recepcion = (from r in db.RecepcionistaDS where r.idUsuario == idUser select r.idSucursalDS).FirstOrDefault();
+Hospital = (from h in db.SucursalDS where h.idSucursalDS == Recepcion select h.Nombre).FirstOrDefault();
+idHospital = (from h in db.SucursalDS where h.idSucursalDS == Recepcion select h.idSucursalDS).FirstOrDefault();
+Sucursal = Hospital.ToString();
+
+modelo = db.PacienteDS.Join(db.CitaDS, n => n.idPacienteDS, m => m.idPacienteDS, (n, m) => new { N = n, M = m }).Where(s => s.M.FechaCita >= thisDate && s.M.FechaCita < tomorrowDate && s.M.Sucursal == Sucursal);
+
+registros = db.PacienteDS.Join(db.CitaDS, n => n.idPacienteDS, m => m.idPacienteDS, (n, m) => new { N = n, M = m }).Where(s => s.M.FechaCita >= thisDate && s.M.FechaCita < tomorrowDate && s.M.Sucursal == Sucursal).Count();
+
+}
+else
+{
+Hospital = "GENERAL";
+Sucursal = Hospital.ToString();
+
+modelo = db.PacienteDS.Join(db.CitaDS, n => n.idPacienteDS, m => m.idPacienteDS, (n, m) => new { N = n, M = m }).Where(s => s.M.FechaCita >= thisDate && s.M.FechaCita < tomorrowDate)/*.OrderByDescending(o => o.M.TipoTramite)*/;
+
+registros = db.PacienteDS.Join(db.CitaDS, n => n.idPacienteDS, m => m.idPacienteDS, (n, m) => new { N = n, M = m }).Where(s => s.M.FechaCita >= thisDate && s.M.FechaCita < tomorrowDate).Count();
+
+}
+}
+
+
+}
+
+<br />
+<br />
+<h2 style="color:navy" @*class="text-center"*@>@Sucursal</h2>
+<br />
+<div class="form-inline">
+    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#exampleModal"><span class="glyphicon glyphicon-plus"></span> Nueva Cita</button>
+    @*<div class="input-group pull-right">
+            <input type="text" class="form-control" id="buscador" name="dato" placeholder="Paciente o Expediente">
+            <span class="input-group-btn">
+                <button class="btn btn-info buscar" id="buscar" type="button"><span class="glyphicon glyphicon-search"></span></button>
+            </span>
+        </div>*@
+</div>
+
+@section scripts{
+
+    <script>
+        var input = document.getElementById("buscador");
+        input.addEventListener("keyup", function (event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                document.getElementById("buscar").click();
+            }
+        });
+
+    </script>
+
+    <script>
+    $(function () {
+        $(".buscar").click(function () {
+            var url = "@Url.Action("Buscar", "Recepcion")";
+            var dato = $("#buscador").val();
+            var data = { dato: dato };
+
+            $.post(url, data).done(function (data) {
+                console.log(data);
+                let miResultado = "";
+                if ($.isEmptyObject(data)) {
+                    miResultado = "<h3>No se encontraron registros!!</h3>"
+                }
+                else {
+                    miResultado +=  "<tr class=\"bg-primary\"><th>Nombre</th><th>Sucursal</th><th>Tipo Tramite</th><th>Tipo Licencia</th><th>Estatus Dictamen</th><th>Fecha Cita</th><th></th></tr>"
+                    for (let i = 0; i < data.length; i++) {
+
+                        if (data[i].EstatusDictamen == null) {
+                            miResultado += "<tr style=\"border:1px solid gray\">" +
+                                "<td><b>" + data[i].Nombre + "</b></td>" +
+                                "<td><b>" + data[i].Sucursal + "</b></td>" +
+                                "<td><b>" + data[i].TipoTramite + "</b></td>" +
+                                "<td><b>" + data[i].TipoLicencia + "</b></td>" +
+                                "<td><b>Pendiente</b></td>" +
+                                "<td><b>" + data[i].FechaCita + "</b></td>" +
+                                "</tr>"
+
+                        } else {
+                            miResultado += "<tr style=\"border:1px solid gray\">" +
+                                "<td><b>" + data[i].Nombre + "</b></td>" +
+                                "<td><b>" + data[i].Sucursal + "</b></td>" +
+                                "<td><b>" + data[i].TipoTramite + "</b></td>" +
+                                "<td><b>" + data[i].TipoLicencia + "</b></td>" +
+                                "<td><b>" + data[i].EstatusDictamen + "</b></td>" +
+                                "<td><b>" + data[i].FechaCita + "</b></td>" +
+                                "</tr>"
+
+                        }
+
+                    }
+                }
+
+                $('#exampleModal5').modal('show');
+                document.getElementById("tablaEjemploSS").innerHTML = miResultado;
+
+            }).fail().always(function () {
+
+            });
+        });
+    });
+    </script>
+
+
+    <script>
+    $(function () {
+        $(".ConsultaHash").click(function () {
+            var url = "@Url.Action("BuscarTodo", "Recepcion")";
+            var dato = $("#Hash").val();
+
+            if (dato == "") {
+                document.getElementById("nombre").value = null;
+                document.getElementById("telefono").value = null;
+                document.getElementById("email").value = null;
+                alert("Debe llenar el campo HASH");
+            }
+            else {
+                var data = { dato: dato };
+
+                $.post(url, data).done(function (data) {
+                    console.log(data);
+
+                    if ($.isEmptyObject(data.Nombre)) {
+                        alert("El paciente no existe");
+                        document.getElementById("nombre").value = null;
+                        document.getElementById("telefono").value = null;
+                        document.getElementById("email").value = null;
+                    }
+                    else {
+                        document.getElementById("nombre").value = data.Nombre;
+                        document.getElementById("telefono").value = data.Telefono;
+                        document.getElementById("email").value = data.Email;
+                    }
+
+                    
+
+                }).fail().always(function () {
+
+                });
+            }
+
+            
+        });
+    });
+    </script>
+
+    @if (TempData["Link"] != null)
+    {
+        <script>
+            @*location.href='@Url.Action("AbrirEPI","EPIs", new { id = TempData["ID"] })';*@
+            window.open('@TempData["Link"]');
+        </script>
+    }
+}
+
+<br />
+
+<div class="modal fade" id="exampleModal5" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document" style="width:70%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title text-primary" id="exampleModalLabel"><b>Resultado de la búsqueda:</b></h3>
+            </div>
+            <div class="modal-body" id="">
+                <div class="tablaScroll">
+                    <table class="table tablas table-responsive" id="tablaEjemploSS" style="color: #2F2D6B">
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h3 class="modal-title text-primary" id="exampleModalLabel"><b>Registrar cita previamente pagada</b></h3>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" action="@Url.Content("~/Recepcion/Crear")">
+                    @Html.AntiForgeryToken()
+                    <div class="form-group">
+                        <label for="recipient-name" class="col-form-label">Código HASH:</label>
+                        <input type="text" class="form-control" id="Hash" name="hash">
+                    </div>
+                    <div class="form-group">
+                        <button id="ConsultaHash" type="button" class="btn btn-success ConsultaHash">Consultar Hash</button>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-xs-8">
+                            <label for="recipient-name" class="col-form-label">Nombre del Paciente:</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required style="max-width:100%" />
+                        </div>
+                        <div class="form-group col-xs-4">
+                            <label for="recipient-name" class="col-form-label">Teléfono:</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" style="max-width:100%" required>
+                        </div>
+                    </div>
+                    <br />
+                    <div class="row">
+                        <div class="form-group col-xs-6">
+                            <label for="recipient-name" class="col-form-label">Email:</label>
+                            <input type="email" class="form-control" id="email" name="email" required style="max-width:100%">
+                        </div>
+                        <div class="form-group col-xs-6">
+                            <label for="recipient-name" class="col-form-label">Fecha de Nacimiento:</label>
+                            <input type="date" class="form-control" id="email" name="nacimiento" required style="max-width:100%">
+                        </div>
+                    </div>
+                    <br />
+                    <div class="row">
+                        <div class="col-xs-8">
+                            <label for="recipient-name" class="col-form-label">Calle y Número:</label>
+                            <input type="text" class="form-control" id="email" name="calle" required style="max-width:100%">
+                        </div>
+                        <div class="col-xs-4">
+                            <label for="recipient-name" class="col-form-label">Colonia:</label>
+                            <input type="text" class="form-control" id="email" name="colonia" required style="max-width:100%">
+                        </div>
+                    </div>
+                    <br />
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <label for="recipient-name" class="col-form-label">C. Postal:</label>
+                            <input type="tel" class="form-control" id="email" name="cp" required style="max-width:100%">
+                        </div>
+                        <div class="col-xs-4">
+                            <label for="recipient-name" class="col-form-label">Ciudad:</label>
+                            <input type="text" class="form-control" id="email" name="ciudad" required style="max-width:100%">
+                        </div>
+                        <div class="col-xs-4">
+                            <label for="recipient-name" class="col-form-label">Estado:</label>
+                            <input type="text" class="form-control" id="email" name="estado" required style="max-width:100%">
+                        </div>
+
+                    </div>
+                    <br />
+                    @{
+                        if (idRol == 18)
+                        {
+                            <div class="form-group" style="width:60%; min-width:320px">
+                                <label for="recipient-name" class="col-form-label">Sucursal:</label>
+                                <select name="sucursal" style="width:100%; min-height:5vh; min-width:99%; font-size:2vh" class="form-select">
+                                    <option value="" disabled selected>SELECCIONE UNA OPCIÓN</option>
+                                    @{
+                                        var sucursalesOption = from s in db.SucursalDS select s.Nombre;
+                                        foreach (var opcion in sucursalesOption)
+                                        {
+                                            <option value="@opcion">@opcion</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <input type="hidden" value="@Sucursal" name="sucursal" />
+                        }
+                    }
+
+                    <div class="form-group" style="width:60%; min-width:320px">
+                        <label for="recipient-name" class="col-form-label">Referido Por:</label>
+                        <select name="referido" style="width:100%; min-height:5vh; min-width:99%; font-size:2vh" class="form-select">
+                            <option selected value="NINGUNO">NINGUNO</option>
+                            @{
+                                //var gestores2 = from g in db.Usuarios where g.idRol == 10 select g.Nombre;
+                                var referidosGestor = (from r in db.Referido where r.Tipo == "Gestor" select r).OrderBy(o => o.Nombre);
+                                var referidosGMI = (from r in db.Referido where r.Tipo == "GMI" select r).OrderBy(o => o.Nombre);
+                                var referidosEmpresa = (from r in db.Referido where r.Tipo == "Empresa" select r).OrderBy(o => o.Nombre);
+                                var referidosCanacar = (from r in db.Referido where r.Tipo == "Canacar" select r).OrderBy(o => o.Nombre);
+                                var referidosParticular = (from r in db.Referido where r.Tipo == "Particular" select r).OrderBy(o => o.Nombre);
+                                var referidosSindicato = (from r in db.Referido where r.Tipo == "Sindicato" select r).OrderBy(o => o.Nombre);
+                                var referidosAnexa = (from r in db.Referido where r.Tipo == "Anexa" select r).OrderBy(o => o.Nombre);
+
+                                <option disabled>--------GESTORES--------</option>
+                                foreach (var item in referidosGestor)
+                                {
+                                    <option value="@item.Nombre">@item.Nombre</option>
+                                }
+
+                                <option disabled><b>--------GMI--------</b></option>
+                                foreach (var item in referidosGMI)
+                                {
+                                    <option value="@item.Nombre">@item.Nombre</option>
+                                }
+
+                                <option disabled><b>--------EMPRESAS--------</b></option>
+                                foreach (var item in referidosEmpresa)
+                                {
+                                    <option value="@item.Nombre">@item.Nombre</option>
+                                }
+
+                                <option disabled><b>--------CANACAR--------</b></option>
+                                foreach (var item in referidosCanacar)
+                                {
+                                    <option value="@item.Nombre">@item.Nombre</option>
+                                }
+
+                                <option disabled><b>--------PARTICULAR--------</b></option>
+                                foreach (var item in referidosParticular)
+                                {
+                                    <option value="@item.Nombre">@item.Nombre</option>
+                                }
+
+                                <option disabled><b>--------SINDICATOS--------</b></option>
+                                foreach (var item in referidosSindicato)
+                                {
+                                    <option value="@item.Nombre">@item.Nombre</option>
+                                }
+
+                                <option disabled><b>--------ANEXA--------</b></option>
+                                foreach (var item in referidosAnexa)
+                                {
+                                    <option value="@item.Nombre">@item.Nombre</option>
+                                }
+                            }
+                            <option disabled><b>--------OTROS--------</b></option>
+                            <option value="OTRO">OTRO</option>
+                        </select>
+                    </div>
+
+                    <input type="hidden" value="@nombreUsuario" name="usuario" />
+</div>
+            <div class="modal-footer bg-info">
+                <button type="button" class="btn btn-warning" data-dismiss="modal">Cerrar</button>
+                <input type="submit" value="Enviar" class="btn btn-primary" />
+            </div></form>
+        </div>
+    </div>
+</div>
+
+
+@if (modelo.FirstOrDefault() == null)
+{
+    <h1 class="text-primary">No existen citas registradas el día de hoy</h1>
+}
+else
+{
+    <div class="tablaScroll">
+        <table class="table tablas" style="color: #2F2D6B">
+            <thead>
+                <tr class="bg-primary" style="border-top-color: black">
+                    <th>
+                    </th>
+
+                    <th>
+                        PACIENTE
+                    </th>
+
+                    <th>
+                        TELÉFONO
+                    </th>
+                    <th>
+                        EMAIL
+                    </th>
+                    <th>
+                        SUCURSAL
+                    </th>
+                    <th>
+                        MEMBRESÍA
+                    </th>
+                    <th>
+                        ESTATUS PAGO
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+
+
+
+            @foreach (var item in modelo)
+            {
+                <tr style="background-color:white; border-bottom: solid 0.1px #337AB7">
+                    <td>
+                        @flag
+                    </td>
+
+                    <td>
+                        @{
+                            var pagado = (from p in db.CitaDS where p.EstatusPago == "Pagado" && p.idPacienteDS == item.N.idPacienteDS select p).FirstOrDefault();
+
+                            if (pagado != null)
+                            {
+                                <span class="field-tip">
+                                    <b>@Html.DisplayFor(modelItem => item.N.Nombre)</b>
+                                    <span class="tip-content">
+                                        <h6>
+                                            <b>Módulos:</b><br />
+                                            @{
+                                                var ofta = (from o in db.Oftalmologo where o.idPacienteDS == item.N.idPacienteDS select o).FirstOrDefault();
+                                                var cardio = (from o in db.Cardiologo where o.idPacienteDS == item.N.idPacienteDS select o).FirstOrDefault();
+                                                var nutri = (from o in db.Nutriologo where o.idPacienteDS == item.N.idPacienteDS select o).FirstOrDefault();
+                                                var medicina = (from o in db.MedicinaInterna where o.idPacienteDS == item.N.idPacienteDS select o).FirstOrDefault();
+
+                                                if (ofta != null)
+                                                {
+                                                    <b>-Oftalmología</b><br />
+                                                }
+                                                if (cardio != null)
+                                                {
+                                                    <b>-Cardiología</b><br />
+                                                }
+                                                if (nutri != null)
+                                                {
+                                                    <b>-Nutrición</b><br />
+                                                }
+                                                if (medicina != null)
+                                                {
+                                                    <b>-Medicina Interna</b><br />
+                                                }
+                                            }
+                                        </h6>
+                                    </span>
+                                </span>
+                            }
+                            else
+                            {
+                                <b>@Html.DisplayFor(modelItem => item.N.Nombre)</b>
+                            }
+                        }
+
+                    </td>
+
+                    <td>
+                        @Html.DisplayFor(modelItem => item.N.Telefono)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.N.Email)
+                    </td>
+                    <td>
+                        <b>@Html.DisplayFor(modelItem => item.M.Sucursal)</b>
+                    </td>
+                    <td>
+                        @{
+                            if (item.M.NoMembresia != null)
+                            {
+                                @Html.DisplayFor(modelItem => item.M.NoMembresia)
+                            }
+                            else
+                            {
+                                <span>N/A</span>
+                            }
+                        }
+                    </td>
+                    <td>
+                        @if (item.M.EstatusPago == "pending_payment" || item.M.EstatusPago == "Pendiente")
+                        {
+                            <b><mark style="background-color: #FFFF00; padding:5px; border-radius:10px">Pendiente</mark></b>
+                        }
+                        else if (item.M.EstatusPago == "paid" || item.M.EstatusPago == "Pagado")
+                        {
+                            <b><mark style="background-color: #41F51A; padding:5px; border-radius:10px">Pagado</mark></b>
+                        }
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-secundary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Acciones <span class="glyphicon glyphicon-triangle-bottom"></span>
+                            </button>
+
+                            <div class="dropdown-menu" style="padding:10px">
+                                @if (item.M.EstatusPago == "Pagado")
+                                {
+                                    <a href="#" data-toggle="modal" data-target="#ModalEditar_@item.M.idPacienteDS"><b>Editar Datos</b></a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="#" data-toggle="modal" data-target="#ModalPago_@item.M.idPacienteDS"><b>Agregar Examen</b></a>
+                                    <div class="dropdown-divider"></div>
+                                    @*<a href="#" data-toggle="modal" data-target="#examen_@item.M.idPacienteDS"><b>Iniciar Examen</b></a>
+                                        <div class="dropdown-divider"></div>*@
+                                }
+                                else if (item.M.EstatusPago == "Pendiente")
+                                {
+                                    <a href="#" data-toggle="modal" data-target="#ModalEditar_@item.M.idPacienteDS"><b>Editar Datos</b></a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="#" data-toggle="modal" data-target="#ModalPago_@item.M.idPacienteDS"><b>Pagado</b></a>
+                                    <div class="dropdown-divider"></div>
+                                    @*<a href="#" data-toggle="modal" data-target="#cancela_@item.M.idPacienteDS"><b class="text-danger">Cancelar Cita</b></a>
+                                        <div class="dropdown-divider"></div>*@
+                                }
+
+                            </div>
+                        </div>
+
+                        <!-- Modal para elegir el método de pago una vez que se concrete el mismo -->
+                        <form method="post" enctype="multipart/form-data" action="@Url.Content("~/Recepcion/Pagado")">
+                            @Html.AntiForgeryToken()
+                            <div class="modal fade" id="ModalPago_@item.M.idPacienteDS" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-info">
+                                            <h4 class="modal-title" id="exampleModalLabel"><b>Elegir Módulos Pagados</b></h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <input type="hidden" name="id" value="@item.M.idPacienteDS" />
+                                            <div class="form-group">
+                                                @{
+                                                    var nutricion = (from n in db.Nutriologo where n.idPacienteDS == item.M.idPacienteDS orderby n.idNutriologo descending select n).FirstOrDefault();
+                                                    var medicinaInterna = (from n in db.MedicinaInterna where n.idPacienteDS == item.M.idPacienteDS orderby n.idMedicinaInterna descending select n).FirstOrDefault();
+                                                    var oftalmologia = (from n in db.Oftalmologo where n.idPacienteDS == item.M.idPacienteDS orderby n.idOftalmologo descending select n).FirstOrDefault();
+                                                    var cardiologia = (from n in db.Cardiologo where n.idPacienteDS == item.M.idPacienteDS orderby n.idCardiologo descending select n).FirstOrDefault();
+                                                    var membresia = (from n in db.CitaDS where n.idPacienteDS == item.M.idPacienteDS orderby n.idCitaDS descending select n.NoMembresia).FirstOrDefault();
+
+
+                                                    if (medicinaInterna != null)
+                                                    {
+                                                        <label class="h4">Médicina Interna: &nbsp; </label>
+                                                        <input type="checkbox" checked id="derechorp" name="mi">
+                                                        <br />
+                                                    }
+                                                    else
+                                                    {
+                                                        <label class="h4">Médicina Interna: &nbsp; </label>
+                                                        <input type="checkbox" id="derechorp" name="mi">
+                                                        <br />
+                                                    }
+
+                                                    if (nutricion != null)
+                                                    {
+                                                        <label class="h4">Nutriólogo: &nbsp; </label>
+                                                        <input type="checkbox" checked id="derechorp" name="nutri">
+                                                        <br />
+                                                    }
+                                                    else
+                                                    {
+                                                        <label class="h4">Nutriólogo: &nbsp; </label>
+                                                        <input type="checkbox" id="derechorp" name="nutri">
+                                                        <br />
+                                                    }
+
+                                                    if (cardiologia != null)
+                                                    {
+                                                        <label class="h4">Cardiólogo: &nbsp; </label>
+                                                        <input type="checkbox" checked id="derechorp" name="cardio">
+                                                        <br />
+                                                    }
+                                                    else
+                                                    {
+                                                        <label class="h4">Cardiólogo: &nbsp; </label>
+                                                        <input type="checkbox" id="derechorp" name="cardio">
+                                                        <br />
+                                                    }
+
+                                                    if (oftalmologia != null)
+                                                    {
+                                                        <label class="h4">Oftalmología: &nbsp; </label>
+                                                        <input type="checkbox" checked id="derechorp" name="ofta">
+                                                        <hr />
+                                                    }
+                                                    else
+                                                    {
+                                                        <label class="h4">Oftalmología: &nbsp; </label>
+                                                        <input type="checkbox" id="derechorp" name="ofta">
+                                                        <hr />
+                                                    }
+
+                                                    if (membresia != null)
+                                                    {
+                                                        <div class="form-group">
+                                                            <label for="recipient-name" class="col-form-label"><h4>¿Cuenta con Membresía?:</h4></label>
+                                                            <input type="tel" class="form-control" id="nombre" name="membresia" placeholder="@item.M.NoMembresia" />
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="form-group">
+                                                            <label for="recipient-name" class="col-form-label"><h4>¿Cuenta con Membresía?:</h4></label>
+                                                            <input type="tel" class="form-control" id="nombre" name="membresia" placeholder="Número de Membresía" />
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                            <input type="submit" value="Enviar" class="btn btn-primary" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Modal para preguntar si quiere Cancelar Cita-->
+                        <form method="post" enctype="multipart/form-data" action="@Url.Content("~/Recepcion/NoLlego")">
+                            @Html.AntiForgeryToken()
+                            <div class="modal fade" id="cancela_@item.M.idPacienteDS" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="exampleModalLabel"><b>¿Desea cancelar la cita de <span class="text-danger">@item.N.Nombre</span>?</b></h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="form-group">
+                                                <label for="recipient-name" class="col-form-label">¿Cual es el motivo?:</label>
+                                                <input type="text" maxlength="200" class="form-control" id="comentario" name="comentario" required>
+                                                <input type="hidden" name="id" value="@item.N.idPacienteDS" />
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                            <input type="submit" value="Enviar" class="btn btn-primary" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+
+                        <!-- Modal para digitalización completa-->
+                        <form method="post" enctype="multipart/form-data" action="@Url.Content("~/Recepcion/Editar")">
+                            @Html.AntiForgeryToken()
+                            <div class="modal fade" id="ModalEditar_@item.M.idPacienteDS" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title text-primary" id="exampleModalLabel"><b>Editar Datos</b></h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="form-group">
+                                                <label for="recipient-name" class="col-form-label">Código HASH:</label>
+                                                <input type="text" class="form-control" id="email" name="estado" placeholder="@item.N.HASH" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="recipient-name" class="col-form-label">No. de Membresía:</label>
+                                                <input type="text" class="form-control" id="email" name="membresia" placeholder="@item.M.NoMembresia" />
+                                            </div>
+                                            <div class="row">
+                                                <div class="form-group col-xs-8">
+                                                    <label for="recipient-name" class="col-form-label">Nombre del Paciente:</label>
+                                                    <input type="text" class="form-control" id="nombre" name="nombre" required style="max-width:100%" placeholder="@item.N.Nombre" />
+                                                </div>
+                                                <div class="form-group col-xs-4">
+                                                    <label for="recipient-name" class="col-form-label">Teléfono:</label>
+                                                    <input type="text" class="form-control" id="telefono" name="telefono" style="max-width:100%" placeholder="@item.N.Telefono">
+                                                </div>
+                                            </div>
+                                            <br />
+                                            <div class="row">
+                                                <div class="form-group col-xs-6">
+                                                    <label for="recipient-name" class="col-form-label">Email:</label>
+                                                    <input type="email" class="form-control" id="email" name="email" placeholder="@item.N.Email" style="max-width:100%">
+                                                </div>
+                                                <div class="form-group col-xs-6">
+                                                    <label for="recipient-name" class="col-form-label">Fecha de Nacimiento:</label>
+                                                    <input type="date" class="form-control" id="email" name="nacimiento" style="max-width:100%">
+                                                </div>
+                                            </div>
+                                            <br />
+                                            <div class="row">
+                                                <div class="col-xs-8">
+                                                    <label for="recipient-name" class="col-form-label">Calle y Número:</label>
+                                                    <input type="text" class="form-control" id="email" name="calle" placeholder="@item.N.Direccion" style="max-width:100%">
+                                                </div>
+                                                <div class="col-xs-4">
+                                                    <label for="recipient-name" class="col-form-label">Colonia:</label>
+                                                    <input type="text" class="form-control" id="email" name="colonia" placeholder="@item.N.Colonia" style="max-width:100%">
+                                                </div>
+                                            </div>
+                                            <br />
+                                            <input type="hidden" class="form-control" id="id" name="id" value="@item.N.idPacienteDS">
+                                            <div class="row">
+                                                <div class="col-xs-4">
+                                                    <label for="recipient-name" class="col-form-label">C. Postal:</label>
+                                                    <input type="tel" class="form-control" id="email" name="cp" placeholder="@item.N.CP" style="max-width:100%">
+                                                </div>
+                                                <div class="col-xs-4">
+                                                    <label for="recipient-name" class="col-form-label">Ciudad:</label>
+                                                    <input type="text" class="form-control" id="email" name="ciudad" placeholder="@item.N.Ciudad" style="max-width:100%">
+                                                </div>
+                                                <div class="col-xs-4">
+                                                    <label for="recipient-name" class="col-form-label">Estado:</label>
+                                                    <input type="text" class="form-control" id="email" name="estado" placeholder="@item.N.Estado" style="max-width:100%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+
+                                        @*<div class="modal-body">
+            <div class="form-group">
+                <label for="recipient-name" class="col-form-label">Nombre del Paciente:</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" placeholder="@item.N.Nombre">
+                <input type="hidden" class="form-control" id="id" name="id" value="@item.N.idPacienteDS">
+            </div>
+            <div class="form-group">
+                <label for="recipient-name" class="col-form-label">Teléfono:</label>
+                <input type="text" class="form-control" id="telefono" name="telefono" placeholder="@item.N.Telefono" />
+            </div>
+            <div class="form-group">
+                <label for="recipient-name" class="col-form-label">Email:</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="@item.N.Email" />
+            </div>
+            <div class="form-group">
+                <label for="recipient-name" class="col-form-label">Código HASH:</label>
+                <input type="text" class="form-control" id="email" name="estado" placeholder="@item.N.HASH" />
+            </div>
+            <div class="form-group">
+                <label for="recipient-name" class="col-form-label">No. de Membresía:</label>
+                <input type="text" class="form-control" id="email" name="membresia" placeholder="@item.M.NoMembresia" />
+            </div>
+        </div>*@
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                            <input type="submit" value="Guardar" class="btn btn-primary" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Modal para Iniciar Exámenes-->
+                        <form method="post" enctype="multipart/form-data" action="@Url.Content("~/Modulos/Index")">
+                            @Html.AntiForgeryToken()
+                            <div class="modal fade" id="examen_@item.M.idPacienteDS" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title text-primary" id="exampleModalLabel"><b>¿Desear iniciar el examen de @item.N.Nombre?</b></h4>
+                                            <input type="hidden" value="@item.N.idPacienteDS" name="id" />
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                            <input type="submit" value="Iniciar" class="btn btn-primary" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                    </td>
+                </tr>
+
+                flag += 1;
+
+            }
+
+        </table>
+    </div>
+}
+
